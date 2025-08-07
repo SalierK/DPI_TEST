@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <sys/types.h>
+
 #if !HAVE_GETDELIM
 // Read a line from stream into buffer, delimited by specified character
 ssize_t	getdelim(char **, size_t *, int, FILE *);

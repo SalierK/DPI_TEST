@@ -1,0 +1,69 @@
+# Linux Makefile for GoodbyeDPI
+# Optimized for Manjaro Linux and other Linux distributions
+
+TARGET = goodbyedpi-linux
+CC = gcc
+PKGCONFIG = pkg-config
+
+# Check if pkg-config is available and get netfilter queue flags
+NFQUEUE_CFLAGS := $(shell $(PKGCONFIG) --cflags libnetfilter_queue 2>/dev/null || echo "-I/usr/include")
+NFQUEUE_LIBS := $(shell $(PKGCONFIG) --libs libnetfilter_queue 2>/dev/null || echo "-lnetfilter_queue -lnfnetlink")
+
+CFLAGS = -std=c99 -pipe -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong \
+         -Wall -Wextra -Wpedantic -Wformat=2 -Wformat-overflow=2 \
+         -Wformat-truncation=2 -Wformat-security -Wno-format-nonliteral \
+         -Wshadow -Wstrict-aliasing=1 -Wnull-dereference -Warray-bounds=2 \
+         -Wimplicit-fallthrough=3 -Wstringop-overflow=4 \
+         -Wformat-signedness -Wstrict-overflow=2 -Wcast-align=strict \
+         -Wfloat-equal -Wcast-align -Wsign-conversion \
+         -DLINUX_BUILD $(NFQUEUE_CFLAGS)
+
+LDFLAGS = -fstack-protector-strong -Wl,-O1,-pie,--as-needed
+LIBS = $(NFQUEUE_LIBS)
+
+.PHONY: default all clean install uninstall
+
+default: $(TARGET)
+all: default
+
+# Linux-specific source files (exclude Windows-specific ones for now)
+SOURCES = goodbyedpi-linux.c linux_packet.c utils/repl_str.c utils/getline.c
+
+OBJECTS = $(SOURCES:.c=.o)
+HEADERS = $(wildcard *.h utils/*.h)
+
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $@
+
+clean:
+	-rm -f *.o utils/*.o
+	-rm -f $(TARGET)
+
+# Install target for system-wide installation
+install: $(TARGET)
+	@echo "Installing GoodbyeDPI for Linux..."
+	install -D -m 755 $(TARGET) $(DESTDIR)/usr/bin/$(TARGET)
+	install -D -m 644 ../docs/goodbyedpi-linux.1 $(DESTDIR)/usr/share/man/man1/goodbyedpi-linux.1
+	@echo "Installation complete. Run 'goodbyedpi-linux --help' for usage information."
+
+uninstall:
+	@echo "Uninstalling GoodbyeDPI for Linux..."
+	rm -f $(DESTDIR)/usr/bin/$(TARGET)
+	rm -f $(DESTDIR)/usr/share/man/man1/goodbyedpi-linux.1
+	@echo "Uninstallation complete."
+
+# Development targets
+debug: CFLAGS += -g -DDEBUG
+debug: $(TARGET)
+
+static: LDFLAGS += -static
+static: $(TARGET)
+
+# Check if required libraries are available
+check-deps:
+	@echo "Checking dependencies..."
+	@$(PKGCONFIG) --exists libnetfilter_queue || (echo "Error: libnetfilter_queue not found. Install with: sudo pacman -S libnetfilter_queue" && exit 1)
+	@echo "All dependencies satisfied."
