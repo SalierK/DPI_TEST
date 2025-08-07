@@ -27,7 +27,7 @@ default: $(TARGET)
 all: default
 
 # Linux-specific source files (exclude Windows-specific ones for now)
-SOURCES = goodbyedpi-linux.c linux_packet.c utils/repl_str.c utils/getline.c
+SOURCES = goodbyedpi-linux.c linux_packet.c config.c utils/repl_str.c utils/getline.c
 
 OBJECTS = $(SOURCES:.c=.o)
 HEADERS = $(wildcard *.h utils/*.h)

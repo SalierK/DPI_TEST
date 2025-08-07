@@ -48,6 +48,7 @@ static void print_usage(const char *program_name) {
     printf("  -q, --queue-num NUM           NFQUEUE queue number (default: 0)\n");
     printf("  -d, --daemon                  Run as daemon\n");
     printf("  -v, --verbose                 Enable verbose output\n");
+    printf("  -c, --config FILE             Load configuration from file\n");
     printf("  -h, --help                    Show this help message\n");
     printf("      --version                 Show version information\n\n");
     printf("Examples:\n");
